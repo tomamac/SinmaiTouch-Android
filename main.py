@@ -10,32 +10,36 @@ import yaml
 import os
 import sys
 
-# 当找不到配置文件时使用的默认配置
-# 编辑好的图片路径
+# Default configuration used when no config file is found
+# Path to the prepared image
 IMAGE_PATH = "./image/image_monitor.png"
-# 串口号
+# Serial port
 COM_PORT = "COM33"
-# 比特率
+# Baud rate
 COM_BAUDRATE = 9600
-# Android 多点触控数量
+# Number of Android multitouch slots
 MAX_SLOT = 12
-# 检测区域的像素值范围
+# Detection area radius in pixels
 AREA_SCOPE = 50
-# 检测区域圆上点的数量
+# Number of sample points on the detection circle
 AREA_POINT_NUM = 8
-# Android 设备实际屏幕大小 (单位:像素)
+# Actual Android screen size (pixels)
 ANDROID_ABS_MONITOR_SIZE = [1600, 2560]
-# Android 设备触控屏幕大小 (单位:像素)
+# Android touch input size (pixels)
 ANDROID_ABS_INPUT_SIZE = [1600, 2560]
-# 是否开启屏幕反转(充电口朝上时开启该配置)
+# Enable landscape coordinate transform
+ANDROID_LANDSCAPE_MODE = False
+# Landscape rotation direction: "right" (clockwise) or "left" (counterclockwise)
+ANDROID_LANDSCAPE_ROTATION = "right"
+# Enable screen inversion (use when the charging port faces up)
 ANDROID_REVERSE_MONITOR = False
-# touch_thread 是否启用sleep, 默认关闭, 如果程序 CPU 占用较高则开启, 如果滑动时延迟极大请关闭
+# Whether touch_thread uses sleep. Off by default; enable if CPU usage is high, disable if swipe latency gets large.
 TOUCH_THREAD_SLEEP_MODE = False
-# 每次 sleep 的延迟, 单位: 微秒, 默认 100 微秒
+# Delay per sleep cycle in microseconds (default: 100)
 TOUCH_THREAD_SLEEP_DELAY = 100
-# 时间补偿值，需要根据自己电脑的性能去实测
+# Time compensation value; calibrate for your own PC performance
 TIME_COMPENSATION = 1.0
-#当需要指定触控设备时填上使用"adb devices"获取到的设备序列号，留空则只支持单设备连接
+# If you need a specific touch device, set its serial from "adb devices"; leave empty for single-device mode only.
 SPECIFIED_DEVICES = ""
 
 exp_list = [
@@ -88,22 +92,22 @@ class SerialManager:
             if self.p1Serial.is_open:
                 self.read_data(self.p1Serial)
             if not self.touchQueue.empty():
-                # print("touchQueue 不为空，开始执行")
+                # print("touchQueue is not empty, processing now")
                 s_temp = self.touchQueue.get()
                 self.update_touch(s_temp)
-            # 延迟防止消耗 CPU 时间过长
+            # Delay to prevent excessive CPU usage
             if TOUCH_THREAD_SLEEP_MODE:
                 microsecond_sleep(TOUCH_THREAD_SLEEP_DELAY)
-            # print("单次执行时间:", (time.perf_counter() - start_time) * 1e3, "毫秒")
+            # print("Execution time per loop:", (time.perf_counter() - start_time) * 1e3, "ms")
 
     def write_thread(self):
         while not self.exit_flag:
-            # # 延迟匹配波特率
+            # # Delay tuned for baud rate
             # time.sleep(0.0075)  # 9600
             # # time.sleep(0.002)  # 115200
-            time.sleep(0.000001)  # 避免延迟过大
+            time.sleep(0.000001)  # Avoid excessive latency
             if not self.startUp:
-                # print("当前没有启动")
+                # print("Not started yet")
                 continue
             # print(self.now_touch_data)
             with self.data_lock:
@@ -112,7 +116,7 @@ class SerialManager:
     def stop(self):
         print("正在停止...")
         self.exit_flag = True
-        time.sleep(0.1)  # 给线程时间退出
+        time.sleep(0.1)  # Give threads time to exit
         if self.p1Serial.is_open:
             self.p1Serial.close()
         print("已停止")
@@ -160,7 +164,7 @@ class SerialManager:
 
     def update_touch(self, s_temp):
         # if not self.startUp:
-        #     print("当前没有启动")
+        #     print("Not started yet")
         #     return
         with self.data_lock:
             self.now_touch_data = s_temp[0]
@@ -181,22 +185,22 @@ def restart_script():
 
 
 def microsecond_sleep(sleep_time):
-    end_time = time.perf_counter() + (sleep_time - TIME_COMPENSATION) / 1e6  # 时间补偿，需要根据自己PC的性能去实测
+    end_time = time.perf_counter() + (sleep_time - TIME_COMPENSATION) / 1e6  # Time compensation; calibrate for your PC.
     while time.perf_counter() < end_time:
         pass
 
 
-# 选择圆形区域的9个点作为判定
+# Sample 9 points in a circular area for detection
 def get_colors_in_area(x, y):
-    colors = set()  # 使用集合来存储颜色值，以避免重复
-    num_points = AREA_POINT_NUM  # 要获取的点的数量
-    angle_increment = 360.0 / num_points  # 角度增量
+    colors = set()  # Use a set to avoid duplicate color values
+    num_points = AREA_POINT_NUM  # Number of points to sample
+    angle_increment = 360.0 / num_points  # Angle increment
     cos_values = [math.cos(math.radians(i * angle_increment)) for i in range(num_points)]
     sin_values = [math.sin(math.radians(i * angle_increment)) for i in range(num_points)]
-    # 处理中心点
+    # Process center point
     if 0 <= x < exp_image_width and 0 <= y < exp_image_height:
         colors.add(get_color_name(exp_image.getpixel((x, y))))
-    # 处理圆上的点
+    # Process points on the circle
     for i in range(num_points):
         dx = int(AREA_SCOPE * cos_values[i])
         dy = int(AREA_SCOPE * sin_values[i])
@@ -209,6 +213,30 @@ def get_colors_in_area(x, y):
 
 def get_color_name(pixel):
     return str(pixel[0]) + "-" + str(pixel[1]) + "-" + str(pixel[2])
+
+
+def map_touch_position(raw_x, raw_y):
+    scaled_x = raw_x * abs_multi_x
+    scaled_y = raw_y * abs_multi_y
+
+    if ANDROID_LANDSCAPE_MODE:
+        if ANDROID_LANDSCAPE_ROTATION == "left":
+            mapped_x = scaled_y
+            mapped_y = ANDROID_ABS_MONITOR_SIZE[1] - scaled_x
+        else:
+            mapped_x = ANDROID_ABS_MONITOR_SIZE[0] - scaled_y
+            mapped_y = scaled_x
+    else:
+        mapped_x = scaled_x
+        mapped_y = scaled_y
+
+    if ANDROID_REVERSE_MONITOR:
+        mapped_x = ANDROID_ABS_MONITOR_SIZE[0] - mapped_x
+        mapped_y = ANDROID_ABS_MONITOR_SIZE[1] - mapped_y
+
+    x = int(max(0, min(ANDROID_ABS_MONITOR_SIZE[0] - 1, mapped_x)))
+    y = int(max(0, min(ANDROID_ABS_MONITOR_SIZE[1] - 1, mapped_y)))
+    return x, y
 
 
 def convert(touch_data):
@@ -253,28 +281,30 @@ def convert(touch_data):
 
 
 def getevent():
-    # 存储多点触控数据的列表
+    # List storing multitouch data
     touch_data = [{"p": False, "x": 0, "y": 0} for _ in range(MAX_SLOT)]
-    # 记录当前按下的触控点数目
+    # Current number of pressed touch points
     touch_sum = 0
-    # 记录当前选择的 SLOT 作为索引
+    # Currently selected SLOT index
     touch_index = 0
 
-    # 执行 adb shell getevent 命令并捕获输出
+    # Run adb shell getevent and capture output
     adb_cmd = 'adb shell getevent -l'
     if SPECIFIED_DEVICES:
         adb_cmd = 'adb -s ' + SPECIFIED_DEVICES + ' shell getevent -l'
     process = subprocess.Popen(adb_cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE)
     key_is_changed = False
+    raw_x = [0 for _ in range(MAX_SLOT)]
+    raw_y = [0 for _ in range(MAX_SLOT)]
 
-    # 读取实时输出
+    # Read realtime output
     for line in iter(process.stdout.readline, b''):
         try:
 
             event = line.decode('utf-8').strip()
             parts = event.split()
 
-            # 屏蔽没用的东西
+            # Skip irrelevant lines
             if len(parts) < 4:
                 continue
 
@@ -284,11 +314,17 @@ def getevent():
 
             if event_type == 'ABS_MT_POSITION_X':
                 key_is_changed = True
-                touch_data[touch_index]["x"] = (ANDROID_ABS_MONITOR_SIZE[0] - event_value * abs_multi_x) if ANDROID_REVERSE_MONITOR else event_value * abs_multi_x
+                raw_x[touch_index] = event_value
+                x, y = map_touch_position(raw_x[touch_index], raw_y[touch_index])
+                touch_data[touch_index]["x"] = x
+                touch_data[touch_index]["y"] = y
 
             elif event_type == 'ABS_MT_POSITION_Y':
                 key_is_changed = True
-                touch_data[touch_index]["y"] = (ANDROID_ABS_MONITOR_SIZE[1] - event_value * abs_multi_y) if ANDROID_REVERSE_MONITOR else event_value * abs_multi_y
+                raw_y[touch_index] = event_value
+                x, y = map_touch_position(raw_x[touch_index], raw_y[touch_index])
+                touch_data[touch_index]["x"] = x
+                touch_data[touch_index]["y"] = y
 
             elif event_type == 'SYN_REPORT':
                 if key_is_changed:
@@ -333,6 +369,8 @@ if __name__ == "__main__":
         AREA_POINT_NUM = c["AREA_POINT_NUM"]
         ANDROID_ABS_MONITOR_SIZE = c["ANDROID_ABS_MONITOR_SIZE"]
         ANDROID_ABS_INPUT_SIZE = c["ANDROID_ABS_INPUT_SIZE"]
+        ANDROID_LANDSCAPE_MODE = c.get("ANDROID_LANDSCAPE_MODE", ANDROID_LANDSCAPE_MODE)
+        ANDROID_LANDSCAPE_ROTATION = c.get("ANDROID_LANDSCAPE_ROTATION", ANDROID_LANDSCAPE_ROTATION)
         ANDROID_REVERSE_MONITOR = c["ANDROID_REVERSE_MONITOR"]
         TOUCH_THREAD_SLEEP_MODE = c["TOUCH_THREAD_SLEEP_MODE"]
         TOUCH_THREAD_SLEEP_DELAY = c["TOUCH_THREAD_SLEEP_DELAY"]
@@ -344,11 +382,18 @@ if __name__ == "__main__":
 
     exp_image = Image.open(IMAGE_PATH)
     exp_image_width, exp_image_height = exp_image.size
-    abs_multi_x = ANDROID_ABS_MONITOR_SIZE[0] / ANDROID_ABS_INPUT_SIZE[0]
-    abs_multi_y = ANDROID_ABS_MONITOR_SIZE[1] / ANDROID_ABS_INPUT_SIZE[1]
+    if ANDROID_LANDSCAPE_MODE:
+        abs_multi_x = ANDROID_ABS_MONITOR_SIZE[1] / ANDROID_ABS_INPUT_SIZE[0]
+        abs_multi_y = ANDROID_ABS_MONITOR_SIZE[0] / ANDROID_ABS_INPUT_SIZE[1]
+    else:
+        abs_multi_x = ANDROID_ABS_MONITOR_SIZE[0] / ANDROID_ABS_INPUT_SIZE[0]
+        abs_multi_y = ANDROID_ABS_MONITOR_SIZE[1] / ANDROID_ABS_INPUT_SIZE[1]
     print("当前触控区域X轴放大倍数:", abs_multi_x)
     print("当前触控区域Y轴放大倍数:", abs_multi_y)
     print("当前链接到端口：", COM_PORT)
+    print("当前方向模式:", "横屏" if ANDROID_LANDSCAPE_MODE else "竖屏")
+    if ANDROID_LANDSCAPE_MODE:
+        print("横屏旋转方向:", ANDROID_LANDSCAPE_ROTATION)
     print(('已' if ANDROID_REVERSE_MONITOR else '未') + "开启屏幕反转")
     serial_manager = SerialManager()
     serial_manager.start()
