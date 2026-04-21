@@ -233,11 +233,11 @@ class TouchEventReader(threading.Thread):
                 self.process.kill()
 
 
-class TouchDebugApp:
+class TouchVisualApp:
     def __init__(self, cfg: DebugConfig):
         self.cfg = cfg
         self.root = tk.Tk()
-        self.root.title("Maimai Touch Debug Visualizer")
+        self.root.title("SinmaiTouch-Android Touch Visualizer")
         self.root.geometry("1300x840")
 
         self.raw_image = Image.open(cfg.image_path).convert("RGB")
@@ -385,7 +385,7 @@ class TouchDebugApp:
 
 def main():
     cfg = load_config("config.yaml")
-    app = TouchDebugApp(cfg)
+    app = TouchVisualApp(cfg)
     app.run()
 
 

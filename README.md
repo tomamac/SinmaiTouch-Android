@@ -1,91 +1,114 @@
-# maimai-android-touch-panel
+This is a fork of [ERR0RPR0MPT's maimai-android-touch-panel](https://github.com/ERR0RPR0MPT/maimai-android-touch-panel). Translated to English with a few tweaks.
+# SinmaiTouch-Android
 
-[English](README_en-US.md) | 简体中文
+English | [简体中文](README_zh-CN.md)
 
-使用 `adb shell getevent` 记录 Android 设备触屏事件并模拟 maimai 触摸屏幕的脚本.
+A script that records Android device touch events using `adb shell getevent` and simulates maimai touch panel input.
 
-## 提示
-玩具项目，在 Xiaomi Pad 5 Pro (Android 13) 及 Xiaomi Pad 6 Pro (Android 15) 上做了测试，且仅适配了 Linux 多点触控协议类型 B。
+## Notice
+This is a small project tested on Xiaomi Pad 5 Pro (Android 13) , Xiaomi Pad 6 Pro (Android 15) and iQOO13 (Android 16) and only supports Linux multi-touch protocol Type B.
 
-目前已知的问题有：
+Known issues:
 
-- 仅支持 Linux 多点触控协议类型 B 而不支持 A (#6)，这可能会导致较旧的设备不受支持，
-  两种类型不同之处详见[文档](https://www.kernel.org/doc/Documentation/input/multi-touch-protocol.txt)
-- 输出 Touch Keys 但无按键按下(分辨率问题)
-- 游戏内按两下只识别一个 tap(脚本未进入运行模式)
-- 游戏内始终显示按下(未知原因)
+- Only supports Linux multi-touch protocol Type B, not Type A (#6), which may cause older devices to be unsupported.
+  For differences between the two types, see [documentation](https://www.kernel.org/doc/Documentation/input/multi-touch-protocol.txt)
+- Touch Keys output but no key press detected (resolution issue)
+- Double tap in-game only registers once (script not in running mode)
+- Touch always shows as pressed in-game (unknown cause)
 
-本人暂无时间去修复存在的 Bug，对于 open issue 和 B 站私信问题的很抱歉本人无法进行答复，有能力的可以自行修复，也欢迎提交 PR.
+I currently don't have time to fix existing bugs. Sorry for not being able to respond to open issues and private messages.
+Those who are capable can fix them on their own, and PRs are welcome.
 
-另外本项目使用了效率较为低下且抽象的方案(Python + 读图 + 串流)，存在延迟等问题，由于本身是娱乐项目故未做优化.
+Additionally, this project uses an inefficient and abstract approach (Python + image reading + streaming), which has latency issues. Since it's an entertainment project, no optimization has been done.
 
-更加优秀的项目有：
+Better projects include:
 
-- [KanadeDX](https://github.com/KanadeDX/Public) (某八个按键程序在 Android/iOS 上的实现)
-- [AstroDX](https://github.com/2394425147/astrodx) (Android，Windows?)
-- [MajdataPlay](https://github.com/LingFeng-bbben/MajdataPlay) (Windows，Android?)
+- [KanadeDX](https://github.com/KanadeDX/Public) (Implementation of a certain 8-button program on Android/iOS)
+- [AstroDX](https://github.com/2394425147/astrodx) (Android, Windows?)
+- [MajdataPlay](https://github.com/LingFeng-bbben/MajdataPlay) (Windows, Android?)
 
-这些项目包含对 Mai2 Chart Player 的完整实现，而不仅仅是一个触摸输入程序。
+These projects include complete implementations of Mai2 Chart Player, not just a touch input program.
 
-## 使用方法
+## Usage
 
-1. 请先将游戏配置文件中 `DummyTouchPanel` 的值改为 `0`
-2. 打开任意 P 图工具，准备一个和设备屏幕大小相同的一张图片(例如:1600x2560)，将 `./image/color_exp_panel.png`
-   放置到该图片圆形触摸区域的位置，编辑好的图片放到脚本 `image` 目录下取名 `image_monitor.png`.
-3. 编辑 `config.yaml` 配置文件，修改 `exp_image_dict` 配置，将各区块对应的 RGB 通道颜色值改为刚 P 的图的对应区块颜色值(一般不用改，默认就行)
-4. 电脑安装 ADB 调试工具，安装路径添加到系统环境变量里面
-5. 如果电脑上没有 Python 环境，请先去 [官网](https://www.python.org/) 下载安装
-6. 双击运行 `install.bat` 安装依赖
-7. 先将实际屏幕大小填入脚本内 `ANDROID_ABS_MONITOR_SIZE` 配置，打开终端，运行 `adb shell getevent -l`，点一下屏幕的最右下角的位置，在终端获取该次点击得到的 `ABS_MT_POSITION_X` 和 `ABS_MT_POSITION_Y` 的数值，把十六进制转换到十进制，将得到的数据填入到 `ANDROID_ABS_INPUT_SIZE` 配置
-8. Android 设备充电口朝下一般为屏幕的正向，如需反向屏幕游玩可将配置 `ANDROID_REVERSE_MONITOR` 改为 true
-9. 编辑 `config.yaml` 配置文件，按文件内说明修改多个配置
-10. 下载一个 `VSPD` 虚拟串口工具，将 `COM3` 和 `COM33` 建立转发
-11. 手机打开 USB 调试，强烈建议同时使用 USB 网络共享连接电脑，串流走 WLAN 可能不是很稳定
-12. 电脑画面可使用 `Apollo`，`IddSampleDriver`，`Sunshine` 和 `Moonlight` 或者延迟较大但比较方便的 `spacedesk` 等软件串流到 Android 设备，详细过程请自行寻找，不在本篇讨论范围之内
-13. 手机连接电脑，先双击运行 `start.bat`，再运行游戏，脚本控制台输出 `已连接到游戏` 即可
-14. 进游戏调整延迟，一般判定 A/B 都要调才能正常用，我这边是 `A:-1.0/B:+0.5` 到 `A:-2.0/B:+2.0`
-15. 打一把看看蹭不蹭星星/触控是否灵敏，根据体验修改 `AREA_SCOPE` 变量 c'c'x'c'c'z'z'z'z'd'd'd'd'c'x
-16. 如果单点延迟低但滑动时延迟极大，请将脚本中 `TOUCH_THREAD_SLEEP_MODE` 修改为 false，或者可以调小 `TOUCH_THREAD_SLEEP_DELAY` 的值(如果还是卡请提交 issue 反馈)
+1. First, change the value of `DummyTouchPanel` in the game configuration file to `0`
 
+2. Open any image editing tool and prepare an in-game image with the same resolution as your Android device screen (e.g., 1600x2560). Place `./image/color_exp_panel.png` at the circular touch area position of the image. Save the edited image to the script's `image` directory and name it `image_monitor.png`
 
-## 命令列表
+3. Edit the `config.yaml` configuration file. Modify the `exp_image_dict` configuration to change the RGB channel color values of each zone to match your edited image's corresponding zone colors (usually no need to change, default is fine)
 
-游戏时如果不小心断开连接，请在控制台输入 `start` 并回车来重新连接游戏
+4. Install ADB debugging tools on your computer and add the installation path to system environment variables
 
-输入 `reverse` 可调整触控设备屏幕方向
+5. If you don't have Python installed, download and install it from the [official website](https://www.python.org/)
 
-输入 `restart` 可重新读取配置文件/重启脚本
+6. Double-click `install.bat` to install dependencies
 
-输入 `exit` 可完全退出脚本
+7. First, fill in the actual Android screen resolution in **landscape orientation [ Height , Width ]** into the `ANDROID_ABS_MONITOR_SIZE` (e.g., 2560x1600) configuration in the script.
 
-## 部分问题
+8. Enable USB debugging on your phone. Strongly recommend using USB network tethering to connect to the computer, as streaming over WLAN may not be very stable and increase latency
 
-关于延迟/其他建议可参考 [#3](https://github.com/ERR0RPR0MPT/maimai-android-touch-panel/issues/3)
+9. Connect your phone to the computer, open a terminal, run `adb shell getevent -lp`, find the touch input device (the one that has `ABS_MT_POSITION_X` / `ABS_MT_POSITION_Y`), get the max values for those two fields from the terminal, and fill the obtained data into the `ANDROID_ABS_INPUT_SIZE` configuration [ X , Y ] (e.g., 15999, 25599)
 
-Q：在安卓高版本(13-15)上测试触摸区域完全对不上，只有点屏幕左上角有用，图片用的是平板实际分辨率，在一台安卓 10 设备测试是正常的
+10. Android devices with charging port facing down are generally in normal screen orientation. If you need to play with reversed screen, change the `ANDROID_REVERSE_MONITOR` configuration to true
 
-A：按步骤修改脚本内 `ANDROID_ABS_MONITOR_SIZE` 和 `ANDROID_ABS_INPUT_SIZE` 配置
+11. \*\***NEW**\*\* alternatively, if you desire to play in landscape orientation change the `ANDROID_LANDSCAPE_MODE` to `true` and `ANDROID_LANDSCAPE_ROTATION` to `left` for counterclockwise and `right` for clockwise
 
-Q：关闭再打开报错
+12. Edit the `config.yaml` configuration file and modify multiple configurations according to the instructions in the file
 
-A：如果直接关闭控制台窗口有可能导致后台进程残留，请使用任务管理器彻底关闭进程或者使用 Ctrl + C 终止程序，也可以在退出前输入 `exit` 。
+13. Download a virtual serial port tool (`VSPD`,`com0com`, etc.) and create a "pair" between `COM3` and `COM33`
 
-## 注意
+14. Enable USB debugging on your phone. Strongly recommend using USB network tethering to connect to the computer, as streaming over WLAN may not be very stable and increase latency
 
-想要加 2P 的重新复制一下脚本并添加串口 COM4 到 COM44 的转发，并且在配置文件 “SPECIFIED_DEVICES” 中指定使用 “adb devices” 获取到的设备序列号
+15. You can stream the computer screen to Android devices using software like `Apollo`, `IddSampleDriver`, `Sunshine` and `Moonlight`, or the more convenient but higher latency `spacedesk`. Please find the detailed process on your own, as it's not within the scope of this discussion
 
-该脚本仅用于测试，目前来说打 12-13 也可以鸟加，13+ 以上开始容易断，需要在之后进行更好的优化。
+16. If you wish to test first you can run `python .\touch_visualizer.py` or double-click `visualizer.bat` and change any values in the configuration file if needed (run the visualizer again after changing values)
 
-## 类似项目
+17. double-click `start.bat`, then run the game. When the script console outputs `已连接到游戏` (Connected to game), you're ready
+
+18. Adjust the delay in-game. Generally, both judgment A/B need adjustment to work properly. For me, it's `A:-1.0/B:+0.5` to `A:-2.0/B:+2.0`
+
+19. Play a round to see if you're missing any slides / if touch is responsive. Modify the `AREA_SCOPE` variable based on your experience
+
+20. If single-point latency is low but sliding has extremely high latency, change `TOUCH_THREAD_SLEEP_MODE` in the script to false, or you can decrease the value of `TOUCH_THREAD_SLEEP_DELAY` (if it's still laggy, please submit an issue for feedback)
+
+## Command List
+
+If accidentally disconnected during gameplay, enter `start` in the console and press Enter to reconnect to the game
+
+Enter `reverse` to adjust the touch device screen orientation
+
+Enter `restart` to reload the configuration file/restart the script
+
+Enter `exit` to fully exit the script
+
+## Common Issues
+
+For delay/other suggestions, refer to [#3](https://github.com/ERR0RPR0MPT/maimai-android-touch-panel/issues/3)
+
+Q: On higher Android versions (13-15), the touch area is completely misaligned. Only tapping the top-left corner of the screen works. The image uses the tablet's actual resolution. Testing on an Android 10 device works normally.
+
+A: Follow the steps to modify the `ANDROID_ABS_MONITOR_SIZE` and `ANDROID_ABS_INPUT_SIZE` configurations in the script
+
+Q: Error when closing and reopening
+
+A: Directly closing the console window may cause background processes to remain. Please use Task Manager to completely close the process or use Ctrl + C to terminate the program. You can also enter `exit` before exiting.
+
+## Notes
+
+To add 2P, copy the script again and add forwarding from COM4 to COM44. In the configuration file "SPECIFIED_DEVICES", specify the device serial number obtained using "adb devices"
+
+This script is for testing purposes only. Currently, playing 12-13 difficulty is feasible and need better optimization in the future.
+
+## Similar Projects
 
 [maimai-windows-touch-panel](https://github.com/ERR0RPR0MPT/maimai-windows-touch-panel)
 
-## 许可证
+## License
 
 [MIT License](https://github.com/ERR0RPR0MPT/maimai-android-touch-panel?tab=MIT-1-ov-file)
 
-## 其他
+## Other
 
-编辑好的区块成品图类似这样：
+The edited zone image should look something like this:
 
-![](https://raw.githubusercontent.com/ERR0RPR0MPT/maimai-android-touch-panel/main/image/image_monitor.png)
+![](https://raw.githubusercontent.com/tomamac/SinmaiTouch-Android/main/image/image_monitor.png)
