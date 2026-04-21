@@ -23,7 +23,7 @@ ANDROID_ABS_MONITOR_SIZE: [ 3168, 1440 ]
 ANDROID_ABS_INPUT_SIZE: [ 14399, 31679 ]
 
 # 横屏坐标映射模式 | Enable landscape coordinate mapping mode
-ANDROID_LANDSCAPE_MODE: true
+ANDROID_LANDSCAPE_MODE: false
 
 # 横屏旋转方向: right(顺时针) / left(逆时针) | Landscape rotation: right (clockwise) / left (counterclockwise)
 ANDROID_LANDSCAPE_ROTATION: "left"

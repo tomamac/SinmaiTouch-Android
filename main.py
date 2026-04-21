@@ -164,7 +164,7 @@ class SerialManager:
 
     def update_touch(self, s_temp):
         # if not self.startUp:
-        #     print("Not started yet")
+        #     print("当前没有启动")
         #     return
         with self.data_lock:
             self.now_touch_data = s_temp[0]
