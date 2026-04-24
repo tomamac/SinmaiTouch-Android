@@ -43,7 +43,7 @@ These projects include complete implementations of Mai2 Chart Player, not just a
 
 6. Double-click `install.bat` to install dependencies
 
-7. First, fill in the actual Android screen resolution in **landscape orientation [ Height , Width ]** into the `ANDROID_ABS_MONITOR_SIZE` (e.g., 2560x1600) configuration in the script.
+7. First, fill in the actual Android screen resolution **[ Height , Width ]** into the `ANDROID_ABS_MONITOR_SIZE` (e.g., 2560x1600) configuration in the script.
 
 8. Enable USB debugging on your phone. Strongly recommend using USB network tethering to connect to the computer, as streaming over WLAN may not be very stable and increase latency
 
@@ -57,19 +57,17 @@ These projects include complete implementations of Mai2 Chart Player, not just a
 
 13. Download a virtual serial port tool (`VSPD`,`com0com`, etc.) and create a "pair" between `COM3` and `COM33`
 
-14. Enable USB debugging on your phone. Strongly recommend using USB network tethering to connect to the computer, as streaming over WLAN may not be very stable and increase latency
+14. You can stream the computer screen to Android devices using software like `Apollo`, `IddSampleDriver`, `Sunshine` and `Moonlight`, or the more convenient but higher latency `spacedesk`. Please find the detailed process on your own, as it's not within the scope of this discussion
 
-15. You can stream the computer screen to Android devices using software like `Apollo`, `IddSampleDriver`, `Sunshine` and `Moonlight`, or the more convenient but higher latency `spacedesk`. Please find the detailed process on your own, as it's not within the scope of this discussion
+15. If you wish to test first you can run `python .\touch_visualizer.py` or double-click `visualizer.bat` and change any values in the configuration file if needed (run the visualizer again after changing values)
 
-16. If you wish to test first you can run `python .\touch_visualizer.py` or double-click `visualizer.bat` and change any values in the configuration file if needed (run the visualizer again after changing values)
+16. double-click `start.bat`, then run the game. When the script console outputs `已连接到游戏` (Connected to game), you're ready
 
-17. double-click `start.bat`, then run the game. When the script console outputs `已连接到游戏` (Connected to game), you're ready
+17. Adjust the delay in-game. Generally, both judgment A/B need adjustment to work properly. For me, it's `A:-1.0/B:+0.5` to `A:-2.0/B:+2.0`
 
-18. Adjust the delay in-game. Generally, both judgment A/B need adjustment to work properly. For me, it's `A:-1.0/B:+0.5` to `A:-2.0/B:+2.0`
+18. Play a round to see if you're missing any slides / if touch is responsive. Modify the `AREA_SCOPE` variable based on your experience
 
-19. Play a round to see if you're missing any slides / if touch is responsive. Modify the `AREA_SCOPE` variable based on your experience
-
-20. If single-point latency is low but sliding has extremely high latency, change `TOUCH_THREAD_SLEEP_MODE` in the script to false, or you can decrease the value of `TOUCH_THREAD_SLEEP_DELAY` (if it's still laggy, please submit an issue for feedback)
+19. If single-point latency is low but sliding has extremely high latency, change `TOUCH_THREAD_SLEEP_MODE` in the script to false, or you can decrease the value of `TOUCH_THREAD_SLEEP_DELAY` (if it's still laggy, please submit an issue for feedback)
 
 ## Command List
 
