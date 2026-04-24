@@ -37,7 +37,7 @@
 4. 电脑安装 ADB 调试工具，并将安装路径添加到系统环境变量。
 5. 如果电脑上没有 Python 环境，请先去 [官网](https://www.python.org/) 下载安装。
 6. 双击运行 `install.bat` 安装依赖。
-7. 先将 Android 实际屏幕分辨率按**横屏 [高, 宽]**填入脚本内 `ANDROID_ABS_MONITOR_SIZE` 配置（例如 2560x1600）。
+7. 先将 Android 实际屏幕分辨率按 **[高, 宽]** 填入脚本内 `ANDROID_ABS_MONITOR_SIZE` 配置（例如 2560x1600）。
 8. 手机开启 USB 调试，强烈建议同时使用 USB 网络共享连接电脑，串流走 WLAN 可能不稳定且会增加延迟。
 9. 手机连接电脑后，打开终端运行 `adb shell getevent -lp`，找到触摸输入设备（即包含 `ABS_MT_POSITION_X` / `ABS_MT_POSITION_Y` 的设备），读取这两个字段的 max 值，并把数据填入 `ANDROID_ABS_INPUT_SIZE` 配置 `[X, Y]`（例如 15999, 25599）。
 10. Android 设备充电口朝下一般为屏幕正向，如需反向屏幕游玩可将配置 `ANDROID_REVERSE_MONITOR` 改为 `true`。
